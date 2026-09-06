@@ -127,13 +127,15 @@ tasks.register("release") {
 	dependsOn("remappedShadowJar")
 }
 
+// Release notes are generated for publishing and may be absent in source checkouts.
+val releaseNotes = file("../../release.md").takeIf { it.isFile }
+	?.readText()?.replace("{version}", project.version.toString()).orEmpty()
+
 modrinth {
 	token.set(System.getenv("MODRINTH_TOKEN"))
 	projectId.set("swbUV1cr")
 	versionNumber.set("${project.version}-${project.name}")
-	changelog.set(file("../../release.md")
-		.readText()
-		.replace("{version}", project.version.toString()))
+	changelog.set(releaseNotes)
 	uploadFile.set(tasks.findByName("remappedShadowJar"))
 	gameVersions.addAll("1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4")
 	dependencies {
@@ -146,9 +148,7 @@ curseforge {
 	project(closureOf<CurseProject> {
 		id = "406463"
 		changelogType = "markdown"
-		changelog = file("../../release.md")
-			.readText()
-			.replace("{version}", project.version.toString())
+		changelog = releaseNotes
 		releaseType = "release"
 
 		addGameVersion("Fabric")
