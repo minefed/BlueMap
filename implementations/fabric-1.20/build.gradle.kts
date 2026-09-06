@@ -52,7 +52,7 @@ dependencies {
 	mappings ("net.fabricmc:yarn:1.20+build.1")
 	modImplementation ("net.fabricmc:fabric-loader:0.14.21")
 	modImplementation ("net.fabricmc.fabric-api:fabric-api:0.83.0+1.20")
-	modImplementation("me.lucko:fabric-permissions-api:0.1-SNAPSHOT")
+	modImplementation("me.lucko:fabric-permissions-api:0.3.1")
 
 	testImplementation ("org.junit.jupiter:junit-jupiter:5.9.0")
 	testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:5.9.0")
