@@ -39,9 +39,9 @@ val commits = "git rev-list --count $lastTag..HEAD".runCommand()
 println("Git hash: $gitHash" + if (clean) "" else " (dirty)")
 
 group = "de.bluecolored.bluemap"
-version = lastVersion +
+version = providers.gradleProperty("releaseVersion").orNull ?: (lastVersion +
         (if (commits == "0") "" else "-$commits") +
-        (if (clean) "" else "-dirty")
+        (if (clean) "" else "-dirty"))
 
 System.setProperty("bluemap.version", version.toString())
 System.setProperty("bluemap.lastVersion", lastVersion)
