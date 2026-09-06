@@ -32,6 +32,10 @@ repositories {
 	maven ("https://maven.fabricmc.net/")
 	maven ("https://oss.sonatype.org/content/repositories/snapshots")
 	maven ("https://repo.bluecolored.de/releases")
+	// Fixed pre-Loom-1.6 API mirrored by the CC:Tweaked maintainer.
+	maven("https://squiddev.cc/maven") {
+		content { includeModule("me.lucko", "fabric-permissions-api") }
+	}
 }
 
 val shadowInclude: Configuration by configurations.creating
@@ -52,7 +56,7 @@ dependencies {
 	mappings ("net.fabricmc:yarn:1.20+build.1")
 	modImplementation ("net.fabricmc:fabric-loader:0.14.21")
 	modImplementation ("net.fabricmc.fabric-api:fabric-api:0.83.0+1.20")
-	modImplementation("me.lucko:fabric-permissions-api:0.3.1")
+	modImplementation("me.lucko:fabric-permissions-api:0.3.20230723")
 
 	testImplementation ("org.junit.jupiter:junit-jupiter:5.9.0")
 	testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:5.9.0")
