@@ -68,6 +68,7 @@ tasks.javadoc {
 node {
     version.set("20.14.0")
     download.set(true)
+    npmInstallCommand.set("ci")
     nodeProjectDir.set(file("webapp/"))
 }
 
