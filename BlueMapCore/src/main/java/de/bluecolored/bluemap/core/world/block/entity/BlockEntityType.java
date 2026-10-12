@@ -37,11 +37,19 @@ public interface BlockEntityType extends Keyed, BlockEntityLoader {
     BlockEntityType SIGN = new Impl(Key.minecraft("sign"), SignBlockEntity::new);
     BlockEntityType SKULL = new Impl(Key.minecraft("skull"), SkullBlockEntity::new);
     BlockEntityType BANNER = new Impl(Key.minecraft("banner"), BannerBlockEntity::new);
+    BlockEntityType TRAFFICCRAFT_COLORED = new Impl(new Key("trafficcraft:colored_block_entity"), TrafficCraftColoredBlockEntity::new);
+    BlockEntityType TRAFFICCRAFT_TRAFFIC_LIGHT = new Impl(new Key("trafficcraft:traffic_light_block_entity"), TrafficCraftColoredBlockEntity::new);
+    BlockEntityType TRAFFICCRAFT_STREET_SIGN = new Impl(new Key("trafficcraft:street_sign_block_entity"), TrafficCraftColoredBlockEntity::new);
+    BlockEntityType TRAFFICCRAFT_HOUSE_NUMBER_SIGN = new Impl(new Key("trafficcraft:house_number_sign_block_entity"), TrafficCraftColoredBlockEntity::new);
 
     Registry<BlockEntityType> REGISTRY = new Registry<>(
             SIGN,
             SKULL,
-            BANNER
+            BANNER,
+            TRAFFICCRAFT_COLORED,
+            TRAFFICCRAFT_TRAFFIC_LIGHT,
+            TRAFFICCRAFT_STREET_SIGN,
+            TRAFFICCRAFT_HOUSE_NUMBER_SIGN
     );
 
     @RequiredArgsConstructor

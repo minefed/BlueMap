@@ -30,6 +30,7 @@ import de.bluecolored.bluemap.core.util.math.Color;
 import de.bluecolored.bluemap.core.world.biome.Biome;
 import de.bluecolored.bluemap.core.world.block.Block;
 import de.bluecolored.bluemap.core.world.block.BlockNeighborhood;
+import de.bluecolored.bluemap.core.world.block.entity.TrafficCraftColoredBlockEntity;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -126,6 +127,16 @@ public class BlockColorCalculatorFactory {
             String blockId = block.getBlockState().getFormatted();
 
             ColorFunction colorFunction = blockColorMap.get(blockId);
+            // Explicit resource-pack overrides still take precedence. TrafficCraft's client
+            // tint handler reads the paint from the block entity, independently of tint index.
+            if (colorFunction == null && block.getBlockState().getNamespace().equals("trafficcraft")) {
+                if (block.getBlockEntity() instanceof TrafficCraftColoredBlockEntity painted) {
+                    return target.set(painted.getColor(block.getBlockState()));
+                }
+                // Lamp/post models also have tint indices, but no registered client color
+                // handler. Minecraft leaves those textures white instead of using foliage.
+                return target.set(0xFFFFFFFF);
+            }
             if (colorFunction == null) colorFunction = blockColorMap.get("default");
             if (colorFunction == null) colorFunction = BlockColorCalculator::getBlendedFoliageColor;
 
