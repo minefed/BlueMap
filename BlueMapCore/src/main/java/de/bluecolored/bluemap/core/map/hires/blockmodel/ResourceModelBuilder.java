@@ -339,7 +339,7 @@ public class ResourceModelBuilder {
             if (texture != null) {
                 mapColor.set(texture.getColorPremultiplied());
                 if (tintColor != null) {
-                    mapColor.multiply(tintColor);
+                    mapColor.multiply(tintColor).premultiplied();
                 }
 
                 // apply light
@@ -413,7 +413,7 @@ public class ResourceModelBuilder {
         if (faceRotationVector.y > 0.01f && texturePath != null) {
             Texture texture = texturePath.getResource(resourcePack::getTexture);
             if (texture != null) {
-                mapColor.set(texture.getColorPremultiplied()).multiply(quadColor);
+                mapColor.set(texture.getColorPremultiplied()).multiply(quadColor).premultiplied();
                 float light = Math.max(sunLight / 15f, blockLight / 15f);
                 light = (1 - renderSettings.getAmbientLight()) * light + renderSettings.getAmbientLight();
                 mapColor.r *= light;

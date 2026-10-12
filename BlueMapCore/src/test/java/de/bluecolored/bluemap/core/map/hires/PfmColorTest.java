@@ -117,6 +117,25 @@ class PfmColorTest {
             assertColor(tile, face, INDICES[face] == 1 ? 0x234567 : 0xFFFFFF, 128 / 255f);
     }
 
+    @Test void transparentTexturesPreserveLowResolutionTintAndOpacityInBothModelFormats() throws Exception {
+        int water = 0x234567;
+        for (boolean baked : new boolean[]{false, true}) {
+            TileModel tile = new TileModel(INDICES.length * 2);
+            Color lowResolutionColor = new Color().premultiplied();
+            // Texture.from encodes this half-alpha image as the PNG used by the gallery.
+            renderer(0x80FFFFFF).build(new TestBlock("pfm:basic_sink", water), model(baked, "#808080"),
+                    new BlockModelView(tile), lowResolutionColor);
+            float multiplier = baked ? 128 / 255f : 1;
+            for (int face = 0; face < INDICES.length; face++)
+                assertColor(tile, face, INDICES[face] == 1 ? water : 0xFFFFFF, multiplier);
+            // Four white and two water-colored upward faces contribute equal alpha weight.
+            assertEquals((4 + 2 * (0x23 / 255f)) / 6 * multiplier, lowResolutionColor.r, .00001f);
+            assertEquals((4 + 2 * (0x45 / 255f)) / 6 * multiplier, lowResolutionColor.g, .00001f);
+            assertEquals((4 + 2 * (0x67 / 255f)) / 6 * multiplier, lowResolutionColor.b, .00001f);
+            assertEquals(128 / 255f, lowResolutionColor.a, .00001f);
+        }
+    }
+
     private void colors(String json) throws Exception {
         Path file = root.resolve("blockColors.json");
         Files.writeString(file, json);
@@ -124,9 +143,13 @@ class PfmColorTest {
     }
 
     private ResourceModelBuilder renderer() throws Exception {
+        return renderer(0xFFFFFFFF);
+    }
+
+    private ResourceModelBuilder renderer(int argb) throws Exception {
         ResourcePath<Texture> path = new ResourcePath<>("pfm:block/test");
         BufferedImage white = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-        white.setRGB(0, 0, 0xFFFFFFFF);
+        white.setRGB(0, 0, argb);
         path.setResource(Texture.from(path, white, null));
         pack.getTextures().put(path, path.getResource());
         TextureGallery gallery = new TextureGallery();
