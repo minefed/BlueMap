@@ -26,6 +26,7 @@ package de.bluecolored.bluemap.core.resources.pack.resourcepack;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.google.gson.JsonObject;
 import de.bluecolored.bluemap.core.BlueMap;
 import de.bluecolored.bluemap.core.logger.Logger;
 import de.bluecolored.bluemap.core.resources.BlockColorCalculatorFactory;
@@ -34,6 +35,7 @@ import de.bluecolored.bluemap.core.resources.ResourcePath;
 import de.bluecolored.bluemap.core.resources.adapter.ResourcesGson;
 import de.bluecolored.bluemap.core.resources.pack.Pack;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockmodel.BlockModel;
+import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockmodel.Quad;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockmodel.TextureVariable;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockstate.BlockState;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.texture.AnimationMeta;
@@ -65,6 +67,7 @@ public class ResourcePack extends Pack {
     private final Map<ResourcePath<BlockState>, BlockState> blockStates;
     private final Map<ResourcePath<BlockModel>, BlockModel> blockModels;
     private final Map<ResourcePath<Texture>, Texture> textures;
+    private final Map<ResourcePath<Texture>, ResourcePath<Texture>> spriteAliases = new HashMap<>();
 
     private final Map<ResourcePath<BufferedImage>, BufferedImage> colormaps;
     private final BlockColorCalculatorFactory colorCalculatorFactory;
@@ -114,12 +117,26 @@ public class ResourcePack extends Pack {
         if (Thread.interrupted()) throw new InterruptedException();
 
         Logger.global.logInfo("Baking resources...");
+        Map<ResourcePath<Texture>, Texture> sourceTextures = new HashMap<>();
+        spriteAliases.values().forEach(source -> sourceTextures.put(source, textures.get(source)));
+        spriteAliases.forEach((sprite, source) -> {
+            Texture texture = sourceTextures.get(source);
+            if (texture != null) {
+                Texture alias = texture.withResourcePath(sprite);
+                sprite.setResource(alias);
+                textures.put(sprite, alias);
+            } else {
+                // An explicit alias replaces the sprite, even when its source PNG is absent.
+                textures.remove(sprite);
+            }
+        });
         bake();
 
         Logger.global.logInfo("Resources loaded.");
     }
 
     private void loadResources(Path root) throws IOException {
+        loadSpriteAliases(root);
         try {
             // do those in parallel
             CompletableFuture.allOf(
@@ -205,6 +222,30 @@ public class ResourcePack extends Pack {
         }
     }
 
+    /** Single atlas sources name sprites independently of the backing PNG path. */
+    private void loadSpriteAliases(Path root) {
+        Path atlas = root.resolve("assets/minecraft/atlases/blocks.json");
+        if (!Files.isRegularFile(atlas)) return;
+        try (Reader reader = Files.newBufferedReader(atlas)) {
+            JsonObject data = ResourcesGson.INSTANCE.fromJson(reader, JsonObject.class);
+            if (data == null || !data.has("sources")) return;
+            Map<ResourcePath<Texture>, ResourcePath<Texture>> aliases = new HashMap<>();
+            for (var entry : data.getAsJsonArray("sources")) {
+                JsonObject source = entry.getAsJsonObject();
+                String type = source.get("type").getAsString();
+                if (!type.equals("single") && !type.equals("minecraft:single")) continue;
+                ResourcePath<Texture> resource = new ResourcePath<>(source.get("resource").getAsString());
+                ResourcePath<Texture> sprite = source.has("sprite")
+                        ? new ResourcePath<>(source.get("sprite").getAsString()) : resource;
+                aliases.put(sprite, resource);
+            }
+            // Resource roots are ordered from highest to lowest priority.
+            aliases.forEach(spriteAliases::putIfAbsent);
+        } catch (Exception ex) {
+            Logger.global.logDebug("Failed to parse atlas '" + atlas + "': " + ex);
+        }
+    }
+
     private void loadTextures(Path root) throws IOException {
         try {
 
@@ -212,10 +253,21 @@ public class ResourcePack extends Pack {
             Set<ResourcePath<Texture>> usedTextures = new HashSet<>();
             usedTextures.add(MISSING_TEXTURE);
             for (BlockModel model : blockModels.values()) {
+                if (model.getBluemapQuads() != null) {
+                    for (Quad quad : model.getBluemapQuads()) {
+                        if (quad != null && !quad.getTexture().isReference())
+                            usedTextures.add(quad.getTexture().getTexturePath());
+                    }
+                }
                 for (TextureVariable textureVariable : model.getTextures().values()) {
                     if (textureVariable.isReference()) continue;
                     usedTextures.add(textureVariable.getTexturePath());
                 }
+            }
+
+            for (ResourcePath<Texture> sprite : new HashSet<>(usedTextures)) {
+                ResourcePath<Texture> source = spriteAliases.get(sprite);
+                if (source != null) usedTextures.add(source);
             }
 
             // load textures

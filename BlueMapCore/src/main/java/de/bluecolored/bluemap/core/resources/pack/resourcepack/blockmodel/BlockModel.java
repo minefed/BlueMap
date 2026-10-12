@@ -38,6 +38,7 @@ public class BlockModel {
     private ResourcePath<BlockModel> parent;
     private Map<String, TextureVariable> textures = new HashMap<>();
     private Element[] elements;
+    private Quad[] bluemapQuads;
     private boolean ambientocclusion = true;
 
     private transient boolean liquid = false;
@@ -60,6 +61,10 @@ public class BlockModel {
         return elements;
     }
 
+    public Quad[] getBluemapQuads() {
+        return bluemapQuads;
+    }
+
     public boolean isAmbientocclusion() {
         return ambientocclusion;
     }
@@ -77,6 +82,9 @@ public class BlockModel {
     }
 
     public synchronized void optimize(ResourcePack resourcePack) {
+        if (bluemapQuads != null) {
+            for (Quad quad : bluemapQuads) if (quad != null) quad.optimize(resourcePack);
+        }
         for (var variable : this.textures.values()) {
             variable.optimize(resourcePack);
         }
@@ -105,6 +113,12 @@ public class BlockModel {
             parent.applyParent(resourcePack);
 
             parent.textures.forEach(this::applyTextureVariable);
+            if (this.bluemapQuads == null && parent.bluemapQuads != null) {
+                this.bluemapQuads = new Quad[parent.bluemapQuads.length];
+                for (int i = 0; i < this.bluemapQuads.length; i++) {
+                    if (parent.bluemapQuads[i] != null) this.bluemapQuads[i] = parent.bluemapQuads[i].copy();
+                }
+            }
             if (this.elements == null && parent.elements != null) {
                 this.elements = new Element[parent.elements.length];
                 for (int i = 0; i < this.elements.length; i++){

@@ -38,6 +38,7 @@ import de.bluecolored.bluemap.core.resources.pack.resourcepack.ResourcePack;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockmodel.BlockModel;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockmodel.Element;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockmodel.Face;
+import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockmodel.Quad;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockstate.Variant;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.texture.Texture;
 import de.bluecolored.bluemap.core.util.Direction;
@@ -104,6 +105,11 @@ public class ResourceModelBuilder {
             for (Element element : elements) {
                 buildModelElementResource(element, blockModel.initialize());
             }
+        }
+
+        Quad[] quads = modelResource.getBluemapQuads();
+        if (quads != null) {
+            for (Quad quad : quads) if (quad != null) createBakedQuad(quad);
         }
 
         if (color.a > 0) {
@@ -347,6 +353,79 @@ public class ResourceModelBuilder {
                 blockColor.add(mapColor);
             }
         }
+    }
+
+    private final Color quadColor = new Color();
+    private void createBakedQuad(Quad quad) {
+        Direction direction = quad.getDirection();
+        ExtendedBlock<?> neighbor = getRotationRelativeBlock(direction);
+        int sunLight = Math.max(block.getLightData().getSkyLight(), neighbor.getLightData().getSkyLight());
+        int blockLight = Math.max(block.getLightData().getBlockLight(), neighbor.getLightData().getBlockLight());
+        if (block.isRemoveIfCave() &&
+                (renderSettings.isCaveDetectionUsesBlockLight() ? Math.max(blockLight, sunLight) : sunLight) == 0)
+            return;
+        if (quad.getCullface() != null) {
+            ExtendedBlock<?> culledNeighbor = getRotationRelativeBlock(quad.getCullface());
+            BlockProperties properties = culledNeighbor.getProperties();
+            if (properties.isCulling() || properties.getCullingIdentical() &&
+                    culledNeighbor.getBlockState().equals(block.getBlockState())) return;
+        }
+
+        ResourcePath<Texture> texturePath = quad.getTexture().getTexturePath(modelResource.getTextures()::get);
+        int textureId = textureGallery.get(texturePath);
+        quadColor.set(quad.getColor());
+        if (quad.getTintindex() >= 0) {
+            if (tintColor.a < 0) blockColorCalculator.getBlockColor(block, tintColor);
+            quadColor.multiply(tintColor);
+        }
+
+        blockModel.initialize();
+        blockModel.add(2);
+        TileModel tile = blockModel.getHiresTile();
+        float[][] positions = quad.getPositions();
+        float[][] uv = quad.getUv();
+        // Both Minecraft and BlueMap use the original quad winding: 0,1,2 and 0,2,3.
+        for (int triangle = 0; triangle < 2; triangle++) {
+            int a = 0, b = triangle + 1, c = triangle + 2;
+            int face = blockModel.getStart() + triangle;
+            tile.setPositions(face,
+                    positions[a][0] * BLOCK_SCALE, positions[a][1] * BLOCK_SCALE, positions[a][2] * BLOCK_SCALE,
+                    positions[b][0] * BLOCK_SCALE, positions[b][1] * BLOCK_SCALE, positions[b][2] * BLOCK_SCALE,
+                    positions[c][0] * BLOCK_SCALE, positions[c][1] * BLOCK_SCALE, positions[c][2] * BLOCK_SCALE);
+            tile.setUvs(face, uv[a][0] / 16f, uv[a][1] / 16f,
+                    uv[b][0] / 16f, uv[b][1] / 16f, uv[c][0] / 16f, uv[c][1] / 16f);
+            tile.setMaterialIndex(face, textureId);
+            tile.setColor(face, quadColor.r, quadColor.g, quadColor.b);
+            tile.setSunlight(face, sunLight);
+            tile.setBlocklight(face, blockLight);
+            if (quad.isShade() && modelResource.isAmbientocclusion()) {
+                tile.setAOs(face, quadAo(positions[a], direction),
+                        quadAo(positions[b], direction), quadAo(positions[c], direction));
+            } else {
+                tile.setAOs(face, 1, 1, 1);
+            }
+        }
+
+        Vector3i normal = direction.toVector();
+        faceRotationVector.set(normal.getX(), normal.getY(), normal.getZ());
+        makeRotationRelative(faceRotationVector);
+        if (faceRotationVector.y > 0.01f && texturePath != null) {
+            Texture texture = texturePath.getResource(resourcePack::getTexture);
+            if (texture != null) {
+                mapColor.set(texture.getColorPremultiplied()).multiply(quadColor);
+                float light = Math.max(sunLight / 15f, blockLight / 15f);
+                light = (1 - renderSettings.getAmbientLight()) * light + renderSettings.getAmbientLight();
+                mapColor.r *= light;
+                mapColor.g *= light;
+                mapColor.b *= light;
+                blockColorOpacity = Math.max(blockColorOpacity, mapColor.a);
+                blockColor.add(mapColor);
+            }
+        }
+    }
+
+    private float quadAo(float[] position, Direction direction) {
+        return testAo(corners[0].set(position[0], position[1], position[2]), direction);
     }
 
     private ExtendedBlock<?> getRotationRelativeBlock(Direction direction){

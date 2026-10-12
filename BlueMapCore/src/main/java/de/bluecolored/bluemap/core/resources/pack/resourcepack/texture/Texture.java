@@ -76,6 +76,10 @@ public class Texture {
         return resourcePath;
     }
 
+    public Texture withResourcePath(ResourcePath<Texture> path) {
+        return new Texture(path, new Color().set(color), halfTransparent, texture, animation);
+    }
+
     public Color getColorStraight() {
         return color;
     }
