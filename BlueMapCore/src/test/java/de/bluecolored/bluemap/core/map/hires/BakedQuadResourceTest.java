@@ -45,9 +45,13 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
@@ -110,6 +114,27 @@ class BakedQuadResourceTest {
     @Test void malformedQuadIsRejectedInsteadOfCrashingRender() {
         assertThrows(RuntimeException.class, () -> ResourcesGson.INSTANCE.fromJson(
                 "{\"bluemap_quads\":[{\"positions\":[[0,0,0]],\"uv\":[[0,0]]}]}", BlockModel.class));
+    }
+
+    @Test void aliasReplacesExistingPngInRenderedTextureGallery() throws Exception {
+        Path high = root.resolve("high"), low = root.resolve("low");
+        write(high, "assets/minecraft/atlases/blocks.json",
+                "{\"sources\":[{\"type\":\"single\",\"resource\":\"demo:green\",\"sprite\":\"demo:alias\"}]}");
+        png(low, "assets/demo/textures/alias.png", 0xffff0000, 1);
+        png(low, "assets/demo/textures/green.png", 0xff00ff00, 1);
+        ResourcePack pack = packAt(low, QUAD, List.of(high, low));
+        TileModel tile = render(pack, false);
+        TextureGallery gallery = new TextureGallery();
+        gallery.put(pack);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        gallery.writeTexturesFile(output);
+        JsonObject material = ResourcesGson.INSTANCE.fromJson(output.toString(StandardCharsets.UTF_8), JsonElement.class)
+                .getAsJsonArray().get(tile.materialIndex[0]).getAsJsonObject();
+        String encoded = material.get("texture").getAsString().split(",", 2)[1];
+        BufferedImage rendered = ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(encoded)));
+        assertEquals(0xff00ff00, rendered.getRGB(0, 0), "The rendered material must use the overriding alias PNG");
+        assertEquals(0f, pack.getTexturePath("demo:alias").getResource().getColorStraight().r);
+        assertEquals(1f, pack.getTexturePath("demo:alias").getResource().getColorStraight().g);
     }
 
     @Test void inheritedQuadsKeepEachChildTextureBindingIndependent() throws Exception {

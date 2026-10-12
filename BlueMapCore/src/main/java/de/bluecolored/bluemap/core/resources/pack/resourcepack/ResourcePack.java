@@ -124,6 +124,9 @@ public class ResourcePack extends Pack {
             if (texture != null) {
                 Texture alias = texture.withResourcePath(sprite);
                 sprite.setResource(alias);
+                // HashMap.put keeps an existing key, including its cached original texture.
+                // Replace that key so model references and the gallery resolve the alias too.
+                textures.remove(sprite);
                 textures.put(sprite, alias);
             } else {
                 // An explicit alias replaces the sprite, even when its source PNG is absent.
