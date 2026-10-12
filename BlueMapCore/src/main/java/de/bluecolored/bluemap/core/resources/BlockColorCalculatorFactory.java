@@ -124,6 +124,11 @@ public class BlockColorCalculatorFactory {
 
         @SuppressWarnings("UnusedReturnValue")
         public Color getBlockColor(BlockNeighborhood<?> block, Color target) {
+            return getBlockColor(block, 0, target);
+        }
+
+        @SuppressWarnings("UnusedReturnValue")
+        public Color getBlockColor(BlockNeighborhood<?> block, int tintIndex, Color target) {
             String blockId = block.getBlockState().getFormatted();
 
             ColorFunction colorFunction = blockColorMap.get(blockId);
@@ -135,6 +140,21 @@ public class BlockColorCalculatorFactory {
                 }
                 // Lamp/post models also have tint indices, but no registered client color
                 // handler. Minecraft leaves those textures white instead of using foliage.
+                return target.set(0xFFFFFFFF);
+            }
+            if (colorFunction == null && block.getBlockState().getNamespace().equals("pfm")) {
+                String name = block.getBlockState().getValue();
+                if (name.equals("basic_toilet")) {
+                    if ("dirty".equals(block.getBlockState().getProperties().get("toilet")))
+                        return target.set(0xFF534230);
+                    return getBlendedWaterColor(block, target);
+                }
+                if (tintIndex == 1 && (name.equals("basic_sink") || name.equals("basic_bathtub") ||
+                        name.endsWith("_kitchen_sink")))
+                    return getBlendedWaterColor(block, target);
+                // PFM 1.5.0 inherits a material color provider when one exists. The
+                // installed furniture materials have none, so their multiplier is white.
+                // Dynamic lamp block-entity colors require a separate renderer adapter.
                 return target.set(0xFFFFFFFF);
             }
             if (colorFunction == null) colorFunction = blockColorMap.get("default");

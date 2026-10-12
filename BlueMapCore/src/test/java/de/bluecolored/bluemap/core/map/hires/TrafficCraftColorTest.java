@@ -109,6 +109,29 @@ class TrafficCraftColorTest {
     }
 
     @Test
+    void untintedTopFaceDoesNotInheritPreviouslyRenderedPaintInLowResolutionColor() throws Exception {
+        FixtureBlock block = block(chunk("asphalt_pattern_1", "colored_block_entity", 4), 0);
+        BlockModel model = ResourcesGson.INSTANCE.fromJson("{\"ambientocclusion\":false," +
+                "\"textures\":{\"paint\":\"trafficcraft:block/test_paint\"},\"elements\":[" +
+                "{\"from\":[0,0,0],\"to\":[16,16,16],\"faces\":{\"north\":{" +
+                "\"texture\":\"#paint\",\"tintindex\":0}}}," +
+                "{\"from\":[0,0,0],\"to\":[16,16,16],\"faces\":{\"up\":{" +
+                "\"texture\":\"#paint\"}}}]}", BlockModel.class);
+        Variant variant = ResourcesGson.INSTANCE.fromJson("{\"model\":\"trafficcraft:block/test\"}", Variant.class);
+        variant.getModel().setResource(model);
+        TileModel tile = new TileModel(4);
+        Color lowResolutionColor = new Color().premultiplied();
+
+        renderer().build(block, variant, new BlockModelView(tile), lowResolutionColor);
+
+        assertEquals(4, tile.size());
+        for (int face = 0; face < 2; face++) assertFaceColor(tile, face, 0xFED83D);
+        for (int face = 2; face < 4; face++) assertFaceColor(tile, face, 0xFFFFFF);
+        // Only the untinted upward face contributes to the low-resolution map color.
+        assertEquals(0xFFFFFFFF, lowResolutionColor.getInt());
+    }
+
+    @Test
     void ordinaryAsphaltRemainsUntintedWithoutABlockEntity() throws Exception {
         FixtureBlock block = block(chunk("asphalt", "colored_block_entity"), 0);
         assertNull(block.getBlockEntity());

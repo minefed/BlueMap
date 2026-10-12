@@ -51,6 +51,9 @@ import de.bluecolored.bluemap.core.world.LightData;
 import de.bluecolored.bluemap.core.world.block.BlockNeighborhood;
 import de.bluecolored.bluemap.core.world.block.ExtendedBlock;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This model builder creates a BlockStateModel using the information from parsed resource-pack json files.
  */
@@ -66,7 +69,7 @@ public class ResourceModelBuilder {
     private final VectorM3f[] corners = new VectorM3f[8];
     private final VectorM2f[] rawUvs = new VectorM2f[4];
     private final VectorM2f[] uvs = new VectorM2f[4];
-    private final Color tintColor = new Color();
+    private final Map<Integer, Color> tintColors = new HashMap<>();
     private final Color mapColor = new Color();
 
     private BlockNeighborhood<?> block;
@@ -95,7 +98,7 @@ public class ResourceModelBuilder {
         this.variant = variant;
         this.modelResource = variant.getModel().getResource();
 
-        this.tintColor.set(0, 0, 0, -1, true);
+        for (Color tint : tintColors.values()) tint.a = -1;
 
         // render model
         int modelStart = blockModel.getStart();
@@ -298,10 +301,9 @@ public class ResourceModelBuilder {
 
 
         // ####### face-tint
+        Color tintColor = null;
         if (face.getTintindex() >= 0) {
-            if (tintColor.a < 0) {
-                blockColorCalculator.getBlockColor(block, tintColor);
-            }
+            tintColor = getTintColor(face.getTintindex());
 
             tileModel.setColor(face1, tintColor.r, tintColor.g, tintColor.b);
             tileModel.setColor(face2, tintColor.r, tintColor.g, tintColor.b);
@@ -336,7 +338,7 @@ public class ResourceModelBuilder {
             Texture texture = texturePath.getResource(resourcePack::getTexture);
             if (texture != null) {
                 mapColor.set(texture.getColorPremultiplied());
-                if (tintColor.a >= 0) {
+                if (tintColor != null) {
                     mapColor.multiply(tintColor);
                 }
 
@@ -375,8 +377,7 @@ public class ResourceModelBuilder {
         int textureId = textureGallery.get(texturePath);
         quadColor.set(quad.getColor());
         if (quad.getTintindex() >= 0) {
-            if (tintColor.a < 0) blockColorCalculator.getBlockColor(block, tintColor);
-            quadColor.multiply(tintColor);
+            quadColor.multiply(getTintColor(quad.getTintindex()));
         }
 
         blockModel.initialize();
@@ -426,6 +427,12 @@ public class ResourceModelBuilder {
 
     private float quadAo(float[] position, Direction direction) {
         return testAo(corners[0].set(position[0], position[1], position[2]), direction);
+    }
+
+    private Color getTintColor(int index) {
+        Color color = tintColors.computeIfAbsent(index, key -> new Color().set(0, 0, 0, -1, true));
+        if (color.a < 0) blockColorCalculator.getBlockColor(block, index, color);
+        return color;
     }
 
     private ExtendedBlock<?> getRotationRelativeBlock(Direction direction){
