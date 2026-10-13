@@ -58,6 +58,8 @@ public class PRBMWriter implements Closeable {
     private static final int ATTRIBUTE_ENCODING_UNSIGNED_32BIT_INT = 10;
 
     private final CountingOutputStream out;
+    // Reused for each scalar, which is forwarded immediately to the underlying stream.
+    private final byte[] scalarBytes = new byte[Integer.BYTES];
 
     public PRBMWriter(OutputStream out) {
         this.out = new CountingOutputStream(out);
@@ -297,10 +299,11 @@ public class PRBMWriter implements Closeable {
     }
 
     private void write4byteValue(int value) throws IOException {
-        out.write(value & 0xFF);
-        out.write((value >> 8) & 0xFF);
-        out.write((value >> 16) & 0xFF);
-        out.write((value >> 24) & 0xFF);
+        scalarBytes[0] = (byte) value;
+        scalarBytes[1] = (byte) (value >>> 8);
+        scalarBytes[2] = (byte) (value >>> 16);
+        scalarBytes[3] = (byte) (value >>> 24);
+        out.write(scalarBytes, 0, scalarBytes.length);
     }
 
     private void writeFloat(float value) throws IOException {
