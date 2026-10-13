@@ -120,6 +120,10 @@ tasks.withType(AbstractArchiveTask::class).configureEach {
 
 tasks.test {
     useJUnitPlatform()
+    // Keep the supported server runtime covered when Gradle itself runs on a newer JDK.
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    })
 }
 
 tasks.processResources {
