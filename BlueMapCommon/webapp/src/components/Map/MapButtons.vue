@@ -62,7 +62,12 @@ export default {
       bottom: calc(52% + 12px);
     }
 
-    .bm-ui-sheet-full & {
+    .bm-ui-card-open & {
+      bottom: calc(42px + env(safe-area-inset-bottom, 0px) + var(--bm-ui-card-height, 0px));
+    }
+
+    // a card above the sheet leaves no room for the buttons
+    .bm-ui-sheet-full &, .bm-ui-panel-open.bm-ui-card-open & {
       display: none;
     }
 

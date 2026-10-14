@@ -110,12 +110,7 @@ export default {
   @media (max-width: $ui-mobile-break) {
     padding: 0 4px;
 
-    .bm-ui-online-label, .bm-ui-online-icon {
-  color: var(--ui-text-2);
-  margin: 0 4px;
-}
-
-.bm-ui-online-dot {
+    .bm-ui-online-label, .bm-ui-online-dot {
       display: none;
     }
   }

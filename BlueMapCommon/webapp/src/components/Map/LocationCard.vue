@@ -1,5 +1,5 @@
 <template>
-  <div v-if="card" class="bm-ui-card" role="dialog" :aria-label="card.type === 'measure' ? $t('ui.measure.title') : $t('ui.location.title')">
+  <div v-if="card" ref="card" class="bm-ui-card" role="dialog" :aria-label="card.type === 'measure' ? $t('ui.measure.title') : $t('ui.location.title')">
     <div class="bm-ui-card-main" v-if="card.type === 'location'">
       <div class="bm-ui-card-title">{{ address ? address.label : mapName }}</div>
       <div class="bm-ui-card-sub mono">{{ ui.formatCoordinates(card) }}</div>
@@ -104,7 +104,25 @@ export default {
       this.details = false;
     }
   },
+  mounted() {
+    // phones stack the map buttons above the card, so they need its height
+    this.resizeObserver = new ResizeObserver(() => this.publishHeight());
+    this.$watch("card", () => {
+      this.$nextTick(() => {
+        this.resizeObserver.disconnect();
+        if (this.$refs.card) this.resizeObserver.observe(this.$refs.card);
+        this.publishHeight();
+      });
+    }, {immediate: true});
+  },
+  beforeUnmount() {
+    this.resizeObserver.disconnect();
+  },
   methods: {
+    publishHeight() {
+      const root = document.getElementById("app");
+      if (root) root.style.setProperty("--bm-ui-card-height", `${this.$refs.card ? this.$refs.card.offsetHeight : 0}px`);
+    },
     toggleSave() {
       const c = this.card;
       this.ui.toggleSaved({key: this.key, title: this.placeTitle, kind: this.$t("ui.location.coordinates"), position: {x: c.x, y: c.y, z: c.z}});
@@ -146,6 +164,11 @@ export default {
       width: auto;
       transform: none;
       bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+    }
+
+    // stay above the bottom sheet instead of behind it
+    .bm-ui-panel-open & {
+      bottom: calc(52% + 12px);
     }
   }
 }

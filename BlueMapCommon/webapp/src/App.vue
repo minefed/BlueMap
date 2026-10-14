@@ -59,6 +59,7 @@ export default {
         'theme-contrast': this.appState.theme === 'contrast',
         'bm-ui-panel-open': !!this.ui.state.panel && !this.ui.state.panelCollapsed,
         'bm-ui-sheet-full': !!this.ui.state.panel && this.ui.state.sheetExpanded,
+        'bm-ui-card-open': !!this.ui.state.card,
       };
     }
   },
@@ -142,5 +143,16 @@ export default {
     max-width: calc(100% - 32px);
     box-sizing: border-box;
     overflow-wrap: anywhere;
+
+    // keep the message readable above the location / measure card
+    .bm-ui-card-open > & {
+      bottom: calc(44px + env(safe-area-inset-bottom, 0px) + var(--bm-ui-card-height, 0px));
+    }
+
+    @media (max-width: $ui-mobile-break) {
+      .bm-ui-card-open.bm-ui-panel-open > & {
+        bottom: calc(52% + 24px + var(--bm-ui-card-height, 0px));
+      }
+    }
   }
 </style>
