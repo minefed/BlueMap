@@ -54,7 +54,7 @@ can use `window.bluemap.ui`. Every `register*` call returns a function that remo
 | `registerResolver(prefix, (key, saved) => boolean)` | Re-opens saved places whose key starts with `prefix:` |
 | `setStatus(id, {text, state})` | Shows a status line in the layer menu (`state`: `live`, `offline`, `idle`) |
 | `openPlace(place)` / `openList(list)` / `closePanel()` | Shows content in the place panel |
-| `flyTo({x, y, z}, {distance})`, `highlightShape(points, y)`, `toast(text)`, `copy(text)` | Helpers |
+| `flyTo({x, y, z}, {distance, onDone})`, `placePin({x, y, z})`, `highlightShape(points, y)`, `toast(text)`, `copy(text)` | Helpers |
 
 A place is `{key?, kind?, title, subtitle?, badges?, icon?, color?, image?, position?, preview?,
 description?, rows?, actions?, defaultActions?, live?, push?, mount?(element)}`. Fields may be
