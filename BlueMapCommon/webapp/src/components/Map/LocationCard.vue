@@ -69,8 +69,8 @@ export default {
       return this.card && this.card.type === "location" ? this.ui.addressAt(this.card.x, this.card.z) : null;
     },
     key() {
-      const c = this.card;
-      return c ? `coord:${this.viewer.map ? this.viewer.map.id : ""}:${c.x}:${c.y === null ? "" : c.y}:${c.z}` : null;
+      this.viewer.map;
+      return this.card && this.card.type === "location" ? this.ui.coordinateKey(this.card) : null;
     },
     placeTitle() {
       const c = this.card;

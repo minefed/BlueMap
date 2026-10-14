@@ -449,7 +449,7 @@ export class MapUi {
     /**
      * Moves the camera so that the position is visible next to the open panel / above the bottom sheet.
      * @param position {{x: number, y?: number, z: number}}
-     * @param options {{distance?: number, duration?: number}}
+     * @param options {{distance?: number, duration?: number, onDone?: function}}
      */
     flyTo(position, options = {}) {
         if (!position) return;
@@ -478,8 +478,9 @@ export class MapUi {
             cm.position.x = MathUtils.lerp(startX, targetX, ep);
             cm.position.z = MathUtils.lerp(startZ, targetZ, ep);
             cm.distance = MathUtils.lerp(startDistance, targetDistance, ep);
-        }, options.duration !== undefined ? options.duration : 600, () => {
+        }, options.duration !== undefined ? options.duration : 600, finished => {
             this.flyAnimation = null;
+            if (finished && options.onDone) options.onDone();
         });
     }
 
@@ -497,7 +498,9 @@ export class MapUi {
     }
 
     /**
-     * Intersects the screen position with the rendered terrain (hires first, then lowres).
+     * Intersects the screen position with the rendered hires terrain.
+     * Lowres tiles are flat meshes lifted in their shader, so a ray only finds their y = 0 plane;
+     * without a hires hit the caller should fall back to {@link pickPlane} and treat the height as unknown.
      * @returns {Vector3|null}
      */
     pickGround(clientX, clientY) {
@@ -511,16 +514,14 @@ export class MapUi {
         viewer.camera.updateMatrixWorld();
         this.raycaster.setFromCamera(normalized, viewer.camera);
 
-        const scenes = [map.hiresTileManager.scene];
-        map.hiresTileManager.scene.position.set(0, 0, 0);
-        map.hiresTileManager.scene.updateMatrixWorld();
-        for (const manager of map.lowresTileManager) {
-            manager.scene.position.set(0, 0, 0);
-            manager.scene.updateMatrixWorld();
-            scenes.push(manager.scene);
-        }
-        const hit = this.raycaster.intersectObjects(scenes, true)[0];
-        return hit ? hit.point.clone() : null;
+        const scene = map.hiresTileManager.scene;
+        scene.position.set(0, 0, 0);
+        scene.updateMatrixWorld();
+        const hit = this.raycaster.intersectObject(scene, true).find(intersection => {
+            for (let object = intersection.object; object; object = object.parent) if (!object.visible) return false;
+            return true;
+        });
+        return hit ? hit.point.clone().add(this.raycaster.ray.direction.clone().multiplyScalar(0.05)) : null;
     }
 
     /**
@@ -557,15 +558,42 @@ export class MapUi {
     }
 
     /**
-     * @param info {{x: number, y: number|null, z: number, hires: boolean, light?: {sun: number, block: number}, tileUrls?: string[]}}
+     * @param info {{x: number, y: number|null, z: number, hires: boolean, light?: {sun: number, block: number}, tileUrls?: string[], pin?: boolean}}
+     * @returns {boolean} false if the position was used as a measured point instead (no pin)
      */
     showLocation(info) {
         if (this.state.measure) {
             this.addMeasurePoint(info);
-            return;
+            return false;
         }
         this.closeContextMenu();
-        this.state.card = {type: "location", ...info};
+        const {pin, ...location} = info;
+        this.state.card = {type: "location", ...location};
+        // a phone's full-height sheet would hide the card
+        this.state.sheetExpanded = false;
+        if (pin) this.placePin(location);
+        return true;
+    }
+
+    /**
+     * Moves the clicked-position pin, e.g. for a searched or context-menu position.
+     * Without a known height the pin sits at the camera target's height.
+     * @param position {{x: number, y?: number|null, z: number}}
+     */
+    placePin(position) {
+        const marker = this.app.popupMarker;
+        if (!marker) return;
+        const y = position.y === undefined || position.y === null ? Math.floor(this.app.mapViewer.controlsManager.position.y) : position.y;
+        marker.position.set(Math.floor(position.x), y, Math.floor(position.z));
+        marker.open();
+        this.app.mapViewer.redraw();
+    }
+
+    /** Saved-place key of a plain map position. */
+    coordinateKey(position) {
+        const map = this.app.mapViewer.map;
+        const y = position.y === undefined || position.y === null ? "" : position.y;
+        return `coord:${map ? map.data.id : ""}:${position.x}:${y}:${position.z}`;
     }
 
     closeCard() {
@@ -642,6 +670,7 @@ export class MapUi {
             });
         });
         this.removeOverlayMarkers(id => id.startsWith("measure-") && !ids.has(id));
+        this.app.mapViewer.rootElement.classList.toggle("bm-ui-measuring", !!this.state.measure);
         this.app.mapViewer.redraw();
     }
 
@@ -682,13 +711,14 @@ export class MapUi {
     // ---------------------------------------------------------------- context menu
 
     openContextMenu(clientX, clientY) {
-        const point = this.pickGround(clientX, clientY) || this.pickPlane(clientX, clientY);
+        const ground = this.pickGround(clientX, clientY);
+        const point = ground || this.pickPlane(clientX, clientY);
         if (!point) return;
         const root = this.app.mapViewer.rootElement, offset = elementOffset(root);
         this.state.contextMenu = {
             left: clientX - offset.left,
             top: clientY - offset.top,
-            point: {x: Math.floor(point.x), y: Math.floor(point.y), z: Math.floor(point.z)},
+            point: {x: Math.floor(point.x), y: ground ? Math.floor(point.y) : null, z: Math.floor(point.z)},
         };
     }
 

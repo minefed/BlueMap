@@ -1,11 +1,11 @@
 <template>
   <div v-if="menu" ref="menu" class="bm-ui-ctx" :style="style" role="menu" @keydown.esc="ui.closeContextMenu()">
-    <button class="bm-ui-ctx-coord" role="menuitem" @click="act(() => ui.copyCoordinates(menu.point))">{{ menu.point.x }}, {{ menu.point.y }}, {{ menu.point.z }}</button>
+    <button class="bm-ui-ctx-coord" role="menuitem" @click="act(point => ui.copyCoordinates(point))">{{ coordinates }}</button>
     <hr>
-    <button role="menuitem" @click="act(() => ui.showLocation({...menu.point, hires: false}))"><Icon name="place" :size="20"/>{{ $t("ui.context.whatsHere") }}</button>
-    <button role="menuitem" @click="act(() => ui.flyTo(menu.point))"><Icon name="near" :size="20"/>{{ $t("ui.context.center") }}</button>
-    <button role="menuitem" @click="act(() => ui.startMeasure(menu.point))"><Icon name="ruler" :size="20"/>{{ $t("ui.measure.button") }}</button>
-    <button role="menuitem" @click="act(() => ui.openShare({title: title, ...menu.point}))"><Icon name="share" :size="20"/>{{ $t("ui.context.share") }}</button>
+    <button role="menuitem" @click="act(point => ui.showLocation({...point, hires: point.y !== null, pin: true}))"><Icon name="place" :size="20"/>{{ $t("ui.context.whatsHere") }}</button>
+    <button role="menuitem" @click="act(point => ui.flyTo(point))"><Icon name="near" :size="20"/>{{ $t("ui.context.center") }}</button>
+    <button role="menuitem" @click="act(point => ui.startMeasure(point))"><Icon name="ruler" :size="20"/>{{ $t("ui.measure.button") }}</button>
+    <button role="menuitem" @click="act((point, title) => ui.openShare({title, ...point}))"><Icon name="share" :size="20"/>{{ $t("ui.context.share") }}</button>
     <button role="menuitem" @click="act(save)"><Icon name="bookmarkOutline" :size="20"/>{{ $t("ui.context.save") }}</button>
   </div>
 </template>
@@ -36,6 +36,10 @@ export default {
     title() {
       const p = this.menu.point, address = this.ui.addressAt(p.x, p.z);
       return `${address ? address.label : (this.viewer.map ? this.viewer.map.name : "")} (${p.x}, ${p.z})`;
+    },
+    coordinates() {
+      const p = this.menu.point;
+      return (p.y === null ? [p.x, p.z] : [p.x, p.y, p.z]).join(", ");
     }
   },
   watch: {
@@ -79,12 +83,13 @@ export default {
       if (this.menu && this.$refs.menu && !this.$refs.menu.contains(evt.target)) this.ui.closeContextMenu();
     },
     act(action) {
+      // read the clicked point before closing, the menu state is gone afterwards
+      const point = {...this.menu.point}, title = this.title;
       this.ui.closeContextMenu();
-      action();
+      action(point, title);
     },
-    save() {
-      const p = this.menu.point;
-      this.ui.toggleSaved({key: `coord:${this.viewer.map ? this.viewer.map.id : ""}:${p.x}:${p.y}:${p.z}`, title: this.title, kind: this.$t("ui.location.coordinates"), position: p});
+    save(point, title) {
+      this.ui.toggleSaved({key: this.ui.coordinateKey(point), title, kind: this.$t("ui.location.coordinates"), position: point});
     }
   }
 }

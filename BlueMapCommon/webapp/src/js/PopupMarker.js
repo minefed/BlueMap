@@ -116,16 +116,19 @@ export class PopupMarker extends Marker {
             console.debug("Clicked Position Data:", evt.detail);
         }
 
-        this.open();
-
-        if (this.onLocation) this.onLocation({
+        // the map UI may use the click for something else (e.g. a measured point) and hide the pin
+        let showPin = true;
+        if (this.onLocation) showPin = this.onLocation({
             x: this.position.x,
             y: isHires ? this.position.y : null,
             z: this.position.z,
             hires: isHires,
             light: light,
             tileUrls: tileUrls,
-        });
+        }) !== false;
+
+        if (showPin) this.open();
+        else this.close();
     };
 
     open() {

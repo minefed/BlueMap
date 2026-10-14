@@ -100,6 +100,10 @@
   }
 }
 
+.bm-ui-measuring canvas {
+  cursor: crosshair;
+}
+
 #app :focus-visible {
   outline: 2px solid var(--ui-accent);
   outline-offset: 2px;

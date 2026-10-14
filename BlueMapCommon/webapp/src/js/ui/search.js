@@ -65,8 +65,16 @@ export function search(ui, query) {
             title: ui.formatCoordinates(coordinates),
             subtitle: i18n.t("ui.search.goToCoordinates"),
             select: () => {
-                ui.flyTo(coordinates, {distance: Math.min(app.mapViewer.controlsManager.distance, 200)});
-                ui.showLocation({x: Math.floor(coordinates.x), y: coordinates.y !== undefined ? Math.floor(coordinates.y) : null, z: Math.floor(coordinates.z), hires: false});
+                const location = {x: Math.floor(coordinates.x), y: coordinates.y !== undefined ? Math.floor(coordinates.y) : null, z: Math.floor(coordinates.z), hires: false};
+                ui.showLocation({...location, pin: true});
+                // without a typed height the pin follows the terrain height once the camera arrived
+                ui.flyTo(coordinates, {
+                    distance: Math.min(app.mapViewer.controlsManager.distance, 200),
+                    onDone: () => {
+                        const card = ui.state.card;
+                        if (location.y === null && card && card.type === "location" && card.x === location.x && card.z === location.z) ui.placePin(location);
+                    }
+                });
             }
         });
     }
