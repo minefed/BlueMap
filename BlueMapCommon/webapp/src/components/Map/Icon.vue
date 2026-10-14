@@ -78,5 +78,6 @@ export default {
   &.bm-ui-icon-20 { width: 20px; height: 20px; }
   &.bm-ui-icon-18 { width: 18px; height: 18px; }
   &.bm-ui-icon-16 { width: 16px; height: 16px; }
+  &.bm-ui-icon-14 { width: 14px; height: 14px; }
 }
 </style>

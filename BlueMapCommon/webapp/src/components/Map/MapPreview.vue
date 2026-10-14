@@ -11,6 +11,8 @@ export default {
     // blocks per css pixel
     scale: {type: Number, default: 0.34},
     map: {type: Object, default: null},
+    // fill unrendered areas with the world's void colour instead of the neutral placeholder
+    voidBackground: {type: Boolean, default: false},
   },
   data() {
     return {
@@ -36,7 +38,8 @@ export default {
       const map = this.map || this.$bluemap.mapViewer.map;
       if (!map) return;
       await this.$nextTick();
-      const background = getComputedStyle(this.$el).getPropertyValue("--ui-surface-3").trim() || "#e8eaed";
+      const background = this.voidBackground && map.data.voidColor ? `#${map.data.voidColor.getHexString()}` :
+          getComputedStyle(this.$el).getPropertyValue("--ui-surface-3").trim() || "#e8eaed";
       await this.$bluemap.ui.preview.render(this.$refs.canvas, map, this.x, this.z, this.scale, background);
     }
   }

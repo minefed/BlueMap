@@ -18,7 +18,7 @@
           <span class="bm-ui-row-sub">{{ where(player) }}</span>
         </span>
         <span class="bm-ui-mini-btn" :class="{on: ui.isFollowing(player.playerUuid)}" role="button" tabindex="0" @click.stop="ui.toggleFollow(player)" @keydown.enter.stop.prevent="ui.toggleFollow(player)">
-          {{ ui.isFollowing(player.playerUuid) ? $t("ui.player.following") : $t("markers.followPlayerTitle") }}
+          {{ ui.isFollowing(player.playerUuid) ? $t("ui.player.following") : $t("ui.player.follow") }}
         </span>
       </button>
     </div>

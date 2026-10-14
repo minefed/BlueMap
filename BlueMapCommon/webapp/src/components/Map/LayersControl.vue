@@ -24,7 +24,7 @@
       <h3>{{ $t("maps.title") }}</h3>
       <div class="bm-ui-tiles c3">
         <button v-for="map of maps" :key="map.data.id" class="bm-ui-tile" :class="{on: viewer.map && viewer.map.id === map.data.id}" @click="switchMap(map.data.id)">
-          <span class="bm-ui-tile-sq"><MapPreview :map="map" :x="map.data.startPos.x" :z="map.data.startPos.z" :scale="6"/></span>{{ map.data.name }}
+          <span class="bm-ui-tile-sq"><MapPreview :map="map" :x="map.data.startPos.x" :z="map.data.startPos.z" :scale="6" void-background/></span>{{ map.data.name }}
         </button>
       </div>
     </section>

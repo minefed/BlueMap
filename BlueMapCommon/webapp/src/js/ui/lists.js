@@ -80,7 +80,7 @@ export function playersList(ui, push = false) {
                             ui.focusPlayer(player);
                         },
                         action: {
-                            label: following ? i18n.t("ui.player.following") : i18n.t("markers.followPlayerTitle"),
+                            label: following ? i18n.t("ui.player.following") : i18n.t("ui.player.follow"),
                             icon: "target",
                             active: following,
                             onClick: () => ui.toggleFollow(player),

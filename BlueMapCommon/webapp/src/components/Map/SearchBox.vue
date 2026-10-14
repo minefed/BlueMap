@@ -29,7 +29,7 @@
           <Icon v-else :name="result.icon || 'place'" :size="20"/>
         </span>
         <span class="bm-ui-suggest-main">
-          <span class="bm-ui-suggest-title">{{ result.title }}</span>
+          <span class="bm-ui-suggest-title"><template v-for="(part, p) of highlight(result.title)" :key="p"><b v-if="part.match">{{ part.text }}</b><template v-else>{{ part.text }}</template></template></span>
           <span v-if="result.subtitle" class="bm-ui-suggest-sub">{{ result.subtitle }}</span>
         </span>
       </button>
@@ -73,6 +73,12 @@ export default {
     window.removeEventListener("keydown", this.globalKey);
   },
   methods: {
+    highlight(title) {
+      const text = String(title), index = this.query ? text.toLowerCase().indexOf(this.query.toLowerCase()) : -1;
+      if (index < 0) return [{text, match: false}];
+      const end = index + this.query.length;
+      return [{text: text.slice(0, index), match: false}, {text: text.slice(index, end), match: true}, {text: text.slice(end), match: false}];
+    },
     globalKey(evt) {
       if (evt.key !== "/" || evt.ctrlKey || evt.metaKey || evt.altKey) return;
       if (evt.target && evt.target.closest && evt.target.closest("input, textarea, select, [contenteditable]")) return;
@@ -182,6 +188,11 @@ export default {
   }
 }
 
+// the rounded box already shows the focus, like the design
+#app .bm-ui-searchbox input:focus-visible {
+  outline: none;
+}
+
 .bm-ui-search-sep {
   width: 1px;
   height: 24px;
@@ -252,6 +263,10 @@ export default {
 
 .bm-ui-suggest-title {
   font-size: 14px;
+
+  b {
+    font-weight: 700;
+  }
 }
 
 .bm-ui-suggest-sub {

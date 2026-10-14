@@ -360,7 +360,7 @@ export class MapUi {
             actions: () => {
                 const following = this.isFollowing(player.playerUuid);
                 return [
-                    {icon: "target", label: following ? i18n.t("ui.player.following") : i18n.t("markers.followPlayerTitle"), primary: !following, active: following, onClick: () => this.toggleFollow(playerData())},
+                    {icon: "target", label: following ? i18n.t("ui.player.following") : i18n.t("ui.player.follow"), primary: !following, active: following, onClick: () => this.toggleFollow(playerData())},
                     {icon: "near", label: i18n.t("ui.place.moveTo"), onClick: () => this.focusPlayer(playerData())},
                     {icon: "copy", label: i18n.t("ui.place.copyCoordinates"), onClick: () => this.copyCoordinates(playerData().position)},
                 ];
