@@ -544,6 +544,16 @@ export class BlueMapApp {
         }
     }
 
+    /**
+     * Switches the language and remembers it as the user's choice.
+     * @param lang {string}
+     */
+    async setUserLanguage(lang) {
+        await setLanguage(lang);
+        if (this.settings && this.settings.useCookies) this.saveUserSetting("language", lang);
+        this.saveUserSettings();
+    }
+
     setTheme(theme) {
         this.appState.theme = theme;
 
@@ -621,7 +631,9 @@ export class BlueMapApp {
         this.updateControlsSettings();
         this.setTheme(this.loadUserSetting("theme", this.appState.theme));
         this.setScreenshotClipboard(this.loadUserSetting("screenshotClipboard", this.appState.screenshot.clipboard));
-        await setLanguage(this.loadUserSetting("lang", i18n.locale.value));
+        // only a language picked in the settings overrides the configured default
+        // (older versions stored whatever language was active, as "lang")
+        await setLanguage(this.loadUserSetting("language", i18n.locale.value));
         this.setChunkBorders(this.loadUserSetting("chunkBorders", this.mapViewer.data.uniforms.chunkBorders.value))
         this.setDebug(this.loadUserSetting("debug", this.appState.debug));
 
@@ -643,7 +655,6 @@ export class BlueMapApp {
         this.saveUserSetting("showZoomButtons", this.appState.controls.showZoomButtons);
         this.saveUserSetting("theme", this.appState.theme);
         this.saveUserSetting("screenshotClipboard", this.appState.screenshot.clipboard);
-        this.saveUserSetting("lang", i18n.locale.value);
         this.saveUserSetting("chunkBorders", this.mapViewer.data.uniforms.chunkBorders.value);
         this.saveUserSetting("debug", this.appState.debug);
 

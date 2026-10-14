@@ -92,7 +92,7 @@
     <section class="bm-ui-set-group" v-if="languages.length > 1">
       <h3>{{ $t("language.title") }}</h3>
       <div class="bm-ui-set-row">
-        <label for="bm-set-language">{{ $t("language.title") }}</label>
+        <label for="bm-set-language">{{ $t("ui.settings.displayLanguage") }}</label>
         <select id="bm-set-language" :value="$i18n.locale" @change="changeLanguage($event.target.value)">
           <option v-for="lang of languages" :key="lang.locale" :value="lang.locale">{{ lang.name }}</option>
         </select>
@@ -122,7 +122,7 @@
 </template>
 
 <script>
-import {i18n, setLanguage} from "../../i18n";
+import {i18n} from "../../i18n";
 
 export default {
   name: "SettingsView",
@@ -168,9 +168,8 @@ export default {
       const f = parseFloat(value);
       return f === 0 ? this.$t("renderDistance.off") : f.toFixed(0);
     },
-    async changeLanguage(lang) {
-      await setLanguage(lang);
-      this.$bluemap.saveUserSettings();
+    changeLanguage(lang) {
+      return this.$bluemap.setUserLanguage(lang);
     }
   }
 }
