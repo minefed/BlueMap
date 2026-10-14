@@ -25,6 +25,9 @@
 import { MarkerManager } from "./MarkerManager";
 import { PLAYER_MARKER_SET_ID } from "./PlayerMarkerManager";
 
+// marker sets that the webapp creates itself and that the marker file must not remove
+export const PRESERVED_MARKER_SET_IDS = [PLAYER_MARKER_SET_ID, "bm-popup-set", "bm-ui-overlay"];
+
 export class NormalMarkerManager extends MarkerManager {
 
     /**
@@ -44,12 +47,12 @@ export class NormalMarkerManager extends MarkerManager {
      * @returns {boolean}
      */
     updateFromData(markerData) {
-        this.root.updateMarkerSetsFromData(markerData, [PLAYER_MARKER_SET_ID, "bm-popup-set"]);
+        this.root.updateMarkerSetsFromData(markerData, PRESERVED_MARKER_SET_IDS);
         return true;
     }
 
     clear() {
-        this.root.updateMarkerSetsFromData({}, [PLAYER_MARKER_SET_ID, "bm-popup-set"]);
+        this.root.updateMarkerSetsFromData({}, PRESERVED_MARKER_SET_IDS);
     }
 
 }
