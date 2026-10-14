@@ -54,6 +54,20 @@ export class Marker extends Object3D {
         });
     }
 
+    /**
+     * Set by the map UI to show marker details in its place panel.
+     * @type {function(marker: Marker, event: object): boolean | null}
+     */
+    static clickHandler = null;
+
+    /**
+     * Lets the map UI handle a click on this marker.
+     * @returns {boolean} true if the click was handled
+     */
+    handleUiClick(event) {
+        return Marker.clickHandler ? !!Marker.clickHandler(this, event) : false;
+    }
+
     dispose() {}
 
     /**

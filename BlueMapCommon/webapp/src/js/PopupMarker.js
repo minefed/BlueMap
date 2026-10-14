@@ -25,12 +25,16 @@
 import {Marker} from "./markers/Marker";
 import {CSS2DObject} from "./util/CSS2DRenderer";
 import {animate, htmlToElement} from "./util/Utils";
-import {BoxGeometry, MeshBasicMaterial, Mesh, Vector2} from "three";
-import {i18n} from "../i18n";
+import {BoxGeometry, MeshBasicMaterial, Mesh} from "three";
 
+const PIN_SVG = `<svg viewBox="0 0 24 34" aria-hidden="true"><path d="M12 1C5.9 1 1 5.9 1 12c0 8.3 11 21 11 21s11-12.7 11-21C23 5.9 18.1 1 12 1Z" fill="#ea4335" stroke="#a50e0e" stroke-width="1.2"/><circle cx="12" cy="12" r="4" fill="#a50e0e"/></svg>`;
+
+/**
+ * Marks the last clicked map position with a pin and hands the clicked block's data to the map UI.
+ */
 export class PopupMarker extends Marker {
 
-    constructor(id, appState, events) {
+    constructor(id, appState, events, onLocation = null) {
         super(id);
 
         this.data.type = "popup";
@@ -39,9 +43,10 @@ export class PopupMarker extends Marker {
 
         this.appState = appState;
         this.events = events;
+        this.onLocation = onLocation;
         this.visible = false;
 
-        this.elementObject = new CSS2DObject(htmlToElement(`<div id="bm-marker-${this.data.id}" class="bm-marker-${this.data.type}">Test</div>`));
+        this.elementObject = new CSS2DObject(htmlToElement(`<div id="bm-marker-${this.data.id}" class="bm-marker-${this.data.type}">${PIN_SVG}</div>`));
         this.elementObject.position.set(0.5, 1, 0.5);
         this.elementObject.disableDepthTest = true;
         this.addEventListener( 'removed', () => {
@@ -59,11 +64,6 @@ export class PopupMarker extends Marker {
         this.animation = null;
 
         this.events.addEventListener('bluemapMapInteraction', evt => window.setTimeout(() => this.onMapInteraction(evt)));
-
-        window.addEventListener("mousedown", this.removeHandler);
-        window.addEventListener("touchstart", this.removeHandler, { passive: true });
-        window.addEventListener("keydown", this.removeHandler);
-        window.addEventListener("mousewheel", this.removeHandler);
     }
 
     onClick(event) {
@@ -71,6 +71,8 @@ export class PopupMarker extends Marker {
     }
 
     onMapInteraction = evt => {
+        if (evt.detail.data && evt.detail.data.doubleTap) return;
+
         let isHires = true;
         let int = evt.detail.hiresHit;
 
@@ -90,103 +92,24 @@ export class PopupMarker extends Marker {
             .add(evt.detail.ray.direction.clone().multiplyScalar(0.05))
             .floor();
 
-        //this.elementObject.position
-            //.copy(evt.detail.intersection.pointOnLine || evt.detail.intersection.point)
-            //.sub(this.position);
-
-        if (isHires) {
-            this.element.innerHTML = `
-                <div class="group">
-                    <div class="label">${i18n.t("blockTooltip.block")}:</div>
-                    <div class="content">
-                        <div class="entry"><span class="label">x: </span><span class="value">${this.position.x}</span></div>
-                        <div class="entry"><span class="label">y: </span><span class="value">${this.position.y}</span></div>
-                        <div class="entry"><span class="label">z: </span><span class="value">${this.position.z}</span></div>
-                    </div>
-                </div>
-            `;
-        } else {
-            this.element.innerHTML = `
-                <div class="group">
-                    <div class="label">${i18n.t("blockTooltip.position")}:</div>
-                    <div class="content">
-                        <div class="entry"><span class="label">x: </span><span class="value">${this.position.x}</span></div>
-                        <div class="entry"><span class="label">z: </span><span class="value">${this.position.z}</span></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        if (this.appState.debug) {
-            let chunkCoords = this.position.clone().divideScalar(16).floor();
-            let regionCoords = new Vector2(this.position.x, this.position.z).divideScalar(512).floor();
-            let regionFile = `r.${regionCoords.x}.${regionCoords.y}.mca`;
-
-            this.element.innerHTML += `
-                <hr>
-                <div class="group">
-                    <div class="label">${i18n.t("blockTooltip.chunk")}:</div>
-                    <div class="content">
-                        <div class="entry"><span class="label">x: </span><span class="value">${chunkCoords.x}</span></div>
-                        <div class="entry"><span class="label">y: </span><span class="value">${chunkCoords.y}</span></div>
-                        <div class="entry"><span class="label">z: </span><span class="value">${chunkCoords.z}</span></div>
-                    </div>
-                </div>
-                <hr>
-                <div class="group">
-                    <div class="label">${i18n.t("blockTooltip.region.region")}:</div>
-                    <div class="content">
-                        <div class="entry"><span class="label">x: </span><span class="value">${regionCoords.x}</span></div>
-                        <div class="entry"><span class="label">z: </span><span class="value">${regionCoords.y}</span></div>
-                    </div>
-                    <div class="content">
-                        <div class="entry"><span class="label">${i18n.t("blockTooltip.region.file")}: </span><span class="value">${regionFile}</span></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        if (this.appState.debug) {
-            let faceIndex = int.faceIndex;
+        let light = null;
+        if (isHires && int.object && int.object.geometry) {
             let attributes = int.object.geometry.attributes;
             if (attributes.sunlight && attributes.blocklight) {
-                let sunlight = attributes.sunlight.array[faceIndex * 3];
-                let blocklight = attributes.blocklight.array[faceIndex * 3];
-
-                this.element.innerHTML += `
-                    <hr>
-                    <div class="group">
-                        <div class="label">${i18n.t("blockTooltip.light.light")}:</div>
-                        <div class="content">
-                            <div class="entry"><span class="label">${i18n.t("blockTooltip.light.sun")}: </span><span class="value">${sunlight}</span></div>
-                            <div class="entry"><span class="label">${i18n.t("blockTooltip.light.block")}: </span><span class="value">${blocklight}</span></div>
-                        </div>
-                    </div>
-                `;
+                light = {
+                    sun: attributes.sunlight.array[int.faceIndex * 3],
+                    block: attributes.blocklight.array[int.faceIndex * 3]
+                };
             }
         }
 
-        if (this.appState.debug) {
-            let info = "";
-
-            if (isHires) {
-                let hrPath = evt.detail.hiresHit?.object?.userData?.tileUrl;
-                info += `<div>${hrPath}</div>`;
+        let tileUrls = [];
+        if (isHires && evt.detail.hiresHit?.object?.userData?.tileUrl) tileUrls.push(evt.detail.hiresHit.object.userData.tileUrl);
+        if (evt.detail.lowresHits) {
+            for (let i = 0; i < evt.detail.lowresHits.length; i++) {
+                let url = evt.detail.lowresHits[i]?.object?.userData?.tileUrl;
+                if (url) tileUrls.push(url);
             }
-
-            if (evt.detail.lowresHits) {
-                for (let i = 0; i < evt.detail.lowresHits.length; i++) {
-                    let lrPath = evt.detail.lowresHits[i]?.object?.userData?.tileUrl;
-                    if (lrPath) info += `<div>${lrPath}</div>`;
-                }
-            }
-
-            this.element.innerHTML += `
-                <hr>
-                <div class="files">
-                    ${info}
-                </div>
-            `;
         }
 
         if (this.appState.debug){
@@ -194,6 +117,15 @@ export class PopupMarker extends Marker {
         }
 
         this.open();
+
+        if (this.onLocation) this.onLocation({
+            x: this.position.x,
+            y: isHires ? this.position.y : null,
+            z: this.position.z,
+            hires: isHires,
+            light: light,
+            tileUrls: tileUrls,
+        });
     };
 
     open() {
@@ -202,28 +134,22 @@ export class PopupMarker extends Marker {
         this.visible = true;
         this.cube.visible = true;
 
-        let targetOpacity = 1;
-
         this.element.style.opacity = "0";
         this.animation = animate(progress => {
-            this.element.style.opacity = (progress * targetOpacity).toString();
-        }, 300);
-    }
-
-    removeHandler = evt => {
-        if (evt.composedPath().includes(this.element)) return;
-        this.close();
+            this.element.style.opacity = progress.toString();
+        }, 200);
     }
 
     close() {
         if (this.animation) this.animation.cancel();
+        if (!this.visible) return;
 
         this.cube.visible = false;
 
-        let startOpacity = parseFloat(this.element.style.opacity);
+        let startOpacity = parseFloat(this.element.style.opacity) || 1;
         this.animation = animate(progress => {
             this.element.style.opacity = (startOpacity - progress * startOpacity).toString();
-        }, 300, finished => {
+        }, 200, finished => {
             if (finished) this.visible = false;
         });
     }

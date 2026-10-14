@@ -75,6 +75,11 @@ export class PlayerMarker extends Marker {
         return this.elementObject.element.getElementsByTagName("div")[0];
     }
 
+    onClick(event) {
+        if (event.data.doubleTap) return false;
+        return this.handleUiClick(event);
+    }
+
     onBeforeRender(renderer, scene, camera) {
         let distance = Marker.calculateDistanceToCameraPlane(this.position, camera);
 

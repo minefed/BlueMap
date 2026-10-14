@@ -29,49 +29,52 @@
 
     user-select: none;
 
+    .bm-marker-poi-icon {
+      opacity: 1;
+      cursor: pointer;
+      filter: drop-shadow(0 1px 2px #0008);
+    }
+
+    // POI names sit under their icon and open the place panel like the icon does
     .bm-marker-poi-label {
       position: absolute;
       top: 0;
       left: 0;
+      transform: translate(-50%, 4px);
 
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
+      max-width: 14em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
-    .bm-marker-poi-icon {
-      opacity: 1;
-      transition: opacity 0.3s;
-      filter: drop-shadow(1px 1px 3px #0008);
-    }
+      font: 500 12px/1.3 var(--ui-font);
+      color: #3c2a10;
+      text-shadow: 0 0 2px #fff, 0 0 3px #fff, 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
 
-    &.bm-marker-highlight {
-      .bm-marker-poi-label {
-        opacity: 1;
+      pointer-events: auto;
+      cursor: pointer;
+
+      &:empty {
+        display: none;
       }
 
-      .bm-marker-poi-icon {
-        opacity: 0;
+      &:hover {
+        color: var(--ui-accent-text);
       }
     }
   }
 
-  .bm-marker-html .bm-marker-poi-label,
-  .bm-marker-labelpopup,
-  .bm-marker-popup {
+  .bm-marker-labelpopup {
     transform: translate(-50%, -100%) translate(0, -0.5em);
 
     max-width: 15em;
 
-    color: var(--theme-fg);
-    background-color: var(--theme-bg);
-    filter: drop-shadow(1px 1px 3px #0008);
-    padding: 0.5em;
-
-    > hr {
-      border: none;
-      border-bottom: solid 1px var(--theme-bg-light);
-      margin: 0.5em -0.5em;
-    }
+    color: var(--ui-text);
+    background-color: var(--ui-surface);
+    border-radius: 8px;
+    box-shadow: var(--ui-shadow);
+    font: 400 13px/1.4 var(--ui-font);
+    padding: 0.5em 0.75em;
 
     &:after {
       position: absolute;
@@ -81,66 +84,55 @@
 
       content: '';
       border: solid 0.5em transparent;
-      border-top-color: var(--theme-bg);
+      border-top-color: var(--ui-surface);
     }
   }
 
+  // last clicked map position
   .bm-marker-popup {
-    line-height: 1.2em;
+    transform: translate(-50%, -100%);
+    width: 24px;
+    height: 34px;
+    pointer-events: none;
 
-    .group {
-      > .label {
-        position: relative;
-        top: 0;
-        left: 0.5em;
-
-        margin: 0 0.5em;
-
-        font-size: 0.8em;
-        color: var(--theme-fg-light);
-      }
-
-      > .content {
-        display: flex;
-        justify-content: center;
-
-        > .entry {
-          margin: 0 0.5em;
-
-          > .label {
-            color: var(--theme-fg-light);
-          }
-        }
-      }
-    }
-
-    .files {
-      font-size: 0.8em;
-      color: var(--theme-fg-light);
+    svg {
+      display: block;
+      width: 24px;
+      height: 34px;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
     }
   }
 
   .bm-marker-player {
     position: relative;
     transform: translate(-50%, -50%);
-    filter: drop-shadow(1px 1px 3px #0008);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    pointer-events: auto;
 
     img {
-      width: 32px;
+      width: 24px;
+      height: 24px;
       image-rendering: pixelated;
+      border: 2px solid #fff;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 
-      transition: width 0.3s;
+      transition: width 0.3s, height 0.3s;
     }
 
     .bm-player-name {
-      position: absolute;
-      top: -0.5em;
-      left: 50%;
-      transform: translate(-50%, -100%);
-
-      padding: 0.25em;
-      background-color: #0008;
-      color: #fff;
+      margin-top: 3px;
+      padding: 1px 8px;
+      border-radius: 9px;
+      background-color: var(--ui-surface);
+      color: var(--ui-text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+      font: 500 11px/1.4 var(--ui-font);
+      white-space: nowrap;
 
       transition: opacity 0.3s;
     }
@@ -148,7 +140,9 @@
     &[distance-data="med"],
     &[distance-data="far"] {
       img {
-        width: 16px;
+        width: 14px;
+        height: 14px;
+        border-width: 1.5px;
       }
 
       .bm-player-name {

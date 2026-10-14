@@ -53,6 +53,7 @@ export class ObjectMarker extends Marker {
         }
 
         if (event.data.doubleTap) return false;
+        if (this.handleUiClick(event)) return true;
 
         if (this.data.detail || this.data.label) {
             let popup = new LabelPopup(this.data.detail || this.data.label);

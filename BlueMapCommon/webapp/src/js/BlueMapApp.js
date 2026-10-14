@@ -37,6 +37,7 @@ import {i18n, setLanguage} from "../i18n";
 import {PlayerMarkerManager} from "./markers/PlayerMarkerManager";
 import {NormalMarkerManager} from "./markers/NormalMarkerManager";
 import {reactive} from "vue";
+import {MapUi} from "./ui/MapUi";
 
 export class BlueMapApp {
 
@@ -115,9 +116,13 @@ export class BlueMapApp {
         // popup on click
         this.popupMarkerSet = new MarkerSet("bm-popup-set");
         this.popupMarkerSet.data.toggleable = false;
-        this.popupMarker = new PopupMarker("bm-popup", this.appState, this.events);
+        this.popupMarker = new PopupMarker("bm-popup", this.appState, this.events, info => this.ui.showLocation(info));
         this.popupMarkerSet.add(this.popupMarker);
         this.mapViewer.markers.add(this.popupMarkerSet);
+
+        // map UI and its add-on API (window.bluemap.ui)
+        this.ui = new MapUi(this);
+        this.ui.install();
 
         this.updateLoop = null;
 

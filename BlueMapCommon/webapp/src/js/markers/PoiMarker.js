@@ -46,6 +46,7 @@ export class PoiMarker extends HtmlMarker {
 
     onClick(event) {
         if (event.data.doubleTap) return false;
+        if (this.handleUiClick(event)) return true;
 
         if (this.highlight || !this.data.label) return true;
         this.highlight = true;
@@ -69,6 +70,16 @@ export class PoiMarker extends HtmlMarker {
         }, 0);
 
         return true;
+    }
+
+    /**
+     * @param html {string}
+     * @returns {string} the first text of a (possibly html) label
+     */
+    static plainText(html) {
+        if (!html) return "";
+        let match = /^(?:<[^>]*>\s*)*([^<>]*\S[^<>]*)(?:<|$)/i.exec(html);
+        return match && match.length > 1 ? match[1].trim() : "";
     }
 
     set highlight(highlight) {
@@ -128,11 +139,12 @@ export class PoiMarker extends HtmlMarker {
             this.data.listed = markerData.listed === undefined ? true : markerData.listed;
         }
 
-        // update detail
+        // update detail (shown in the place panel) and the visible name under the icon
         if (this.data.detail !== markerData.detail){
             this.data.detail = markerData.detail || this.data.label;
-            this.labelElement.innerHTML = this.data.detail || "";
         }
+        let name = PoiMarker.plainText(this.data.label);
+        if (this.labelElement.textContent !== name) this.labelElement.textContent = name;
 
         // update icon
         if (this._lastIcon !== markerData.icon){

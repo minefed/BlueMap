@@ -94,6 +94,8 @@ export * from "./MainMenu";
 export * from "./MapViewer";
 export * from "./PopupMarker";
 export * from "./Utils";
+export * from "./ui/MapUi";
+export * from "./ui/TilePreview";
 
 /**
  * @param event {object}

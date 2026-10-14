@@ -89,3 +89,70 @@ $mobile-break: 575.98px;
   --theme-stars-night: #444;
   --theme-moon-night: #000;
 }
+
+// map UI (Google-Maps-like layout)
+$ui-mobile-break: 640px;
+$ui-panel-width: 424px;
+
+@mixin ui-base {
+  --ui-font: "Google Sans", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ui-font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@mixin ui-light {
+  --ui-surface: #ffffff;
+  --ui-surface-2: #f1f3f4;
+  --ui-surface-3: #e8eaed;
+  --ui-hover: rgba(60, 64, 67, .08);
+  --ui-text: #202124;
+  --ui-text-2: #5f6368;
+  --ui-text-3: #80868b;
+  --ui-line: #dadce0;
+  --ui-accent: #1a73e8;
+  --ui-accent-weak: #e8f0fe;
+  --ui-accent-text: #1967d2;
+  --ui-on-accent: #ffffff;
+  --ui-ok: #188038;
+  --ui-warn: #c5221f;
+  --ui-scrim: rgba(32, 33, 36, .45);
+  --ui-toast-bg: #323232;
+  --ui-toast-fg: #f1f1f1;
+  --ui-shadow: 0 1px 2px rgba(60, 64, 67, .3), 0 2px 6px 2px rgba(60, 64, 67, .15);
+  --ui-shadow-sm: 0 1px 2px rgba(60, 64, 67, .3), 0 1px 3px 1px rgba(60, 64, 67, .15);
+  color-scheme: light;
+}
+
+@mixin ui-dark {
+  --ui-surface: #202124;
+  --ui-surface-2: #303134;
+  --ui-surface-3: #3c4043;
+  --ui-hover: rgba(232, 234, 237, .08);
+  --ui-text: #e8eaed;
+  --ui-text-2: #9aa0a6;
+  --ui-text-3: #80868b;
+  --ui-line: #3c4043;
+  --ui-accent: #8ab4f8;
+  --ui-accent-weak: #263a57;
+  --ui-accent-text: #8ab4f8;
+  --ui-on-accent: #202124;
+  --ui-ok: #81c995;
+  --ui-warn: #f28b82;
+  --ui-scrim: rgba(0, 0, 0, .55);
+  --ui-toast-bg: #e8eaed;
+  --ui-toast-fg: #202124;
+  --ui-shadow: 0 1px 3px rgba(0, 0, 0, .6), 0 4px 8px 3px rgba(0, 0, 0, .3);
+  --ui-shadow-sm: 0 1px 2px rgba(0, 0, 0, .6), 0 1px 3px 1px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+
+@mixin ui-contrast {
+  @include ui-dark;
+  --ui-surface: #000000;
+  --ui-surface-2: #1b1b1b;
+  --ui-surface-3: #2e2e2e;
+  --ui-text-2: #e0e0e0;
+  --ui-text-3: #bdbdbd;
+  --ui-line: #8a8a8a;
+  --ui-accent: #a8c7fa;
+  --ui-accent-text: #c2d7ff;
+}
